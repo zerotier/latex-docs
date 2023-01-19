@@ -29,7 +29,7 @@
 
 \section{Definitions}
 
-For clarity's sake, when I use the name zerotier in lowercase, I am specifically referring to the V1 ZeroTier protocol. When I use the name ZeroTier with capitalization, it is referring to the ZeroTier organization that maintains zerotier.
+For clarity's sake, when I use the name ZeroTier, unless otherwise specified, I am referring to the V1 ZeroTier protocol. 
 
 \begin{definition}[Node]
 	A \emph{node} in zerotier is a client machine running the zerotier protocol. A node is capable of making peer-to-peer, end-to-end encrypted connections with any other node, so long as it knows the address of the other node, and the other node chooses to respond to its connection.
@@ -59,7 +59,7 @@ For clarity's sake, when I use the name zerotier in lowercase, I am specifically
 
 
 \begin{definition}[Root Servers]
-	\emph{Root servers} are machines operated by ZeroTier that centrally handle the job of memorizing the mapping between addresses and identities, and the mapping between addresses and possible paths to contact the owner of that address. Within the protocol, they are responsible for public key distribution and for coordinating initial contact between newly connecting machines.
+	\emph{Root servers} are machines operated by the ZeroTier organization that centrally handle the job of memorizing the mapping between addresses and identities, and the mapping between addresses and possible paths to contact the owner of that address. Within the protocol, they are responsible for public key distribution and for coordinating initial contact between newly connecting machines.
 \end{definition}
 
 Once keys are distributed and contact is established nodes will no longer contact root servers. The only exception being if the path connecting two nodes goes down, and a new path needs to be established, or if for whatever reason a direct path between two nodes cannot be established, so the nodes decide to route their traffic through their shared connection to the root servers.
