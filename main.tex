@@ -32,15 +32,17 @@
 For clarity's sake, when I use the name ZeroTier, unless otherwise specified, I am referring to the V1 ZeroTier protocol.
 
 \begin{definition}[Node]
-	A \emph{node} in ZeroTier is a client machine running the ZeroTier protocol. A node is capable of making peer-to-peer, end-to-end encrypted connections with any other node, so long as it knows the address of the other node, and the other node chooses to respond to its connection. Public keys are used to identify and authenticate nodes.
+	A \emph{node} in ZeroTier is a client machine running the ZeroTier protocol. A node is capable of making peer-to-peer, end-to-end encrypted ethernet connections with any other node, so long as it knows the address of the other node, and the other node chooses to respond to its connection. Public keys are used to identify and authenticate nodes.
 \end{definition}
+
+Since all nodes are capable of communicating with each other, they form a global virtual ethernet network.
 
 \begin{definition}[Address]
 	The \emph{address} of a node in ZeroTier is a uniquely identifying 40-bit number derived from the hash of the node's public key.
 \end{definition}
 
 \begin{definition}[Identity]
-	The \emph{identity} of a node in ZeroTier consists of that node's public key and matching address.
+	The \emph{identity} of a node in ZeroTier consists of that node's public key and the matching address.
 \end{definition}
 
 \begin{definition}[Path]
@@ -58,16 +60,16 @@ For clarity's sake, when I use the name ZeroTier, unless otherwise specified, I 
 Such networks create their own virtual IP address space; When a node joins a network, it is assigned a virtual IP address on this network, and other nodes on the same network can use that IP address to contact it. The network controller decides how IP addresses are assigned, and whether to use IPv4 or IPv6. To the host machine running ZeroTier, a ZeroTier network looks and behaves as if it is a LAN or WAN that the machine is physically connected to.
 
 \begin{definition}[MAC address]
-	The \emph{MAC address} of a node in ZeroTier consists of the address of the node xor'ed with a network identifier. As such a single node may have multiple MAC addresses but each of these MAC addresses is unique to each ZeroTier network it is a member of. These are the virtual MAC addresses assigned to machines for the sake of ethernet simulation.
+	The \emph{MAC address} of a node in ZeroTier is a 48-bit number consisting of the address of the node xor'ed with a network identifier. As such a single node may have multiple MAC addresses but each of these MAC addresses is unique to each ZeroTier network it is a member of. These are the virtual MAC addresses assigned to machines for the sake of ethernet simulation.
 \end{definition}
 
 \begin{definition}[Root Servers]
-	\emph{Root servers} are machines operated by the ZeroTier organization that centrally handle the job of mapping all global addresses to their matching identities, and mapping addresses to possible paths to the owner of that address. Within the protocol, they are responsible for public key distribution and for coordinating initial contact between newly connecting machines.
+	\emph{Root servers} are nodes operated by the ZeroTier organization that centrally handle the job of mapping all global addresses to their matching identities, and mapping addresses to possible paths to the owner of that address. Within the protocol, they are responsible for public key distribution and for coordinating initial contact between newly connecting machines.
 \end{definition}
 
 Once keys are distributed and contact is established nodes will no longer contact root servers. The only exception being if the path connecting two nodes goes down, and a new path needs to be established, or if for whatever reason a direct path between two nodes cannot be established, so the nodes decide to route their traffic through their shared connection to the root servers.
 
-Network traffic in ZeroTier is peer-to-peer and end-to-end-encrypted. Once a secure session is established between two nodes, it is cryptographically infeasible for the ZeroTier organization to read or modify any node's network traffic. However, it is possible for ZeroTier to perform a man-in-the-middle attack on newly connecting nodes that have not yet established a session. When a root server is asked to map an address to its node's identity, the root can instead brute-force the 40-bits of the address to generate an identity that matches it. It can then respond with this identity it controls instead of the correct one. The root server must then sabotage the ZeroTier pathfinding protocol so that network traffic between these two nodes is either routed through it, or a server controlled by it. Once all this is done a classical man-in-the-middle attack can follow. Any out-of-band confirmation that the identity of the node being contacted is the same as the identity returned by the root will render this attack impossible.
+Network traffic in ZeroTier is peer-to-peer and end-to-end-encrypted. Once a secure session is established between two nodes, it is cryptographically infeasible for the ZeroTier organization to read or modify any node's network traffic. However, it is possible for the ZeroTier organization to perform a man-in-the-middle attack on newly connecting nodes that have not yet established a session. If a root server is compromised, when it is asked to map an address to its node's identity, the root can instead brute-force the 40-bits of the address to generate an identity that matches it. It can then respond with this identity it controls instead of the correct one. The root server must then sabotage the ZeroTier rendezvous protocol so that network traffic between these two nodes is only routed through the root servers. Due to root choice randomization this attack is significantly less successful if just one uncompromised root is online. Once all this is done a classical man-in-the-middle attack can follow. Any out-of-band confirmation that the identity of the node being contacted is the same as the identity returned by the root will render this attack impossible.
 
 Due to security and reliability concerns it is not yet possible for independent administrators to operate their own root servers. However it is possible to operate mirrors of the root servers. These mirrors, referred to as ``moons'' create a local copy of some subset of the root server database, and will defer to the root servers if a request is made of them for an address not present in their database.
 
@@ -81,7 +83,7 @@ When ZeroTier is installed into a host machine, it will generate a random public
 
 Next the host machine will ask for a network identifier from the user. When this is given the host machine will rendezvous with the network controller for that network. Upon a successful rendezvous the node will request to join the network controller's network. If the request is approved, the network controller assigns it a virtual IP address, and sends it any network-specific credentials or rules.
 
-ZeroTier offers ARP and NDP emulation to help client machines map a virtual IP address on a given ZeroTier network to the ZeroTier address of a node. However these protocols are not emulated 1 to 1, in particular because ARP scales poorly on large networks. Instead, when a host machine wishes to connect to a new virtual IP address, it asks the network controller to unicast its request to connect directly to the owner of that virtual IP address, the destination node. If the destination node decides to connect, it will rendezvous with the host machine to established a peer-to-peer connection. Identities and paths are always cached so in the future the host machine is able to resolve an IP address to a path to the destination node without the help of the network controller or a root server.
+ZeroTier offers ARP and NDP emulation to help client machines map a virtual IP address on a given ZeroTier network to the ZeroTier address of a node. However these protocols are not emulated 1 to 1, in particular because ARP scales poorly on large networks. Instead, when a host machine wishes to connect to a new virtual IP address, it asks the network controller to unicast its request to connect directly to the owner of that virtual IP address, the destination node. If the destination node decides to connect, it will rendezvous with the host machine to established a peer-to-peer connection. Identities and paths are always cached so in the future the host machine is able to resolve the IP address to a path to the destination node without the help of the network controller or a root server.
 
 
 
