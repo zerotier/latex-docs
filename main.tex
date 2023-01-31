@@ -60,7 +60,7 @@ Since all nodes are capable of communicating with each other, they form a global
 \end{definition}
 Such networks create their own virtual IP address space. When a node joins a network, it is assigned a virtual IP address on this network, and other nodes on the same network can use that IP address to contact it. The network controller decides how IP addresses are assigned, and whether to use IPv4 or IPv6. To the host machine running ZeroTier, a ZeroTier network looks and behaves as if it is a LAN or WAN that the machine is physically connected to.
 
-\begin{definition}[MAC address]
+\begin{definition}[MAC Address]
 	The \emph{MAC address} of a node in ZeroTier is a 48-bit number consisting of the address of the node xor'ed with a network identifier. As such a single node may have multiple MAC addresses but each of these MAC addresses is unique to each ZeroTier network it is a member of. These are the virtual MAC addresses assigned to machines for the sake of ethernet simulation.
 \end{definition}
 
@@ -76,7 +76,7 @@ Due to security and reliability concerns it is not yet possible for independent 
 
 \section{ZeroTier Rendezvous Protocol}
 
-All ZeroTier nodes start only knowing a few paths to the root servers. ZeroTier is able to bootstrap this into a peer-to-peer connection with any other node. Given the address of a node, a source node will contact a random root server to request the identity of the node with that address, the destination node. The root server will look up the destination node's identity and return it. Once the source node has its identity, it will then choose another random root server to request a rendezvous with the destination node. The root server will then search through all known paths to both the destination and the source nodes, and choose a pair most likely to succeed in back and forth communication. To the source node it will send the destination's path, and to the destination node it will send the source's path. Upon receipt both nodes will attempt to contact each other through the given paths. If either contact is successful the recipient will cache the successful path. From then on both node will choose the highest quality cached path to communicate with each other. Upon receipt of any packet from a node, the path it was received over is either added to the path cache, or updated in the cache to help with quality determination.
+All nodes start only knowing a few paths to the root servers. ZeroTier is able to bootstrap this into a peer-to-peer connection with any other node. Given the address of a node, a source node will contact a random root server to request the identity of the node with that address, the destination node. The root server will look up the destination node's identity and return it. Once the source node has its identity, it will then choose another random root server to request a rendezvous with the destination node. The root server will then search through all known paths to both the destination and the source nodes, and choose a pair most likely to succeed in back and forth communication. To the source node it will send the destination's path, and to the destination node it will send the source's path. Upon receipt both nodes will attempt to contact each other through the given paths. If either contact is successful the recipient will cache the successful path. From then on both node will choose the highest quality cached path to communicate with each other. Upon receipt of any packet from a node, the path it was received over is either added to the path cache, or updated in the cache to help with quality determination.
 
 \section{ZeroTier Client Protocol}
 
@@ -84,7 +84,30 @@ When ZeroTier is installed into a host machine, it will generate a random public
 
 Next the host machine will ask for a network identifier from the user. When this is given the host machine will rendezvous with the network controller for that network. Upon a successful rendezvous the node will request to join the network controller's network. If the request is approved, the network controller assigns it a virtual IP address, and sends it any network-specific credentials or rules.
 
-ZeroTier offers ARP and NDP emulation to help client machines map a virtual IP address on a given ZeroTier network to the ZeroTier address of its node. However these protocols are not emulated 1 to 1, in particular because ARP scales poorly on large networks. Instead, when a host machine wishes to connect to a new virtual IP address, it asks the network controller to unicast its request to connect directly to the owner of that virtual IP address, the destination node. If the destination node decides to connect, it will rendezvous with the host machine to established a peer-to-peer connection. Identities and paths are always cached so in the future the host machine is able to resolve the IP address to a path to the destination node without the help of the network controller or a root server.
+ZeroTier offers ARP and NDP emulation to help client machines map a virtual IP address on a given ZeroTier network to the ZeroTier address of its node. However these protocols are not emulated 1 to 1, in particular because ARP scales poorly on large networks. Instead, when a host machine wishes to connect to a new virtual IP address, it multicasts its request to connect directly to the owner of that virtual IP address, the destination node. See \sectionref{sec:multicast} for more details on ZeroTier multicast. If the destination node decides to connect, it will rendezvous with the host machine to established a peer-to-peer connection. Identities and paths are always cached so in the future the host machine is able to resolve the IP address to a path to the destination node without the help of the network controller or a root server.
+
+\section{ZeroTier Multicast Protocol}\label{sec:multicast}
+
+\begin{definition}[Multicast Group]
+	A \emph{multicast group} is a set of nodes identified with a unique MAC address and optionally an additional 32-bit number, called ``ADI''.
+\end{definition}
+
+Nodes may send ``multicast-like'' packets to any other node on the same network as them. This packet contains the MAC address and optional ADI of a multicast group they would like to join. Every node locally records what multicast-likes they have received, and considers a node to be a member of a multicast group if they have sent it a multicast-like packet. Nodes automatically update known peers about their group membership status through multicast-like packets.
+
+Nodes may send ``multicast-gather'' packets to any other node on the same network. This packet contains the MAC address and ADI of a multicast group. It also contains a number called the ``gather limit''. A node will reply to a multicast-gather packet with a list of the addresses of every node it considers a member of that multicast group. This list will be of length at most the gather limit. No reply is sent if the list is empty.
+
+Nodes may send ``multicast-frame'' packets to any other node on the same network. This packet again contains the MAC address and ADI of a multicast group, a gather limit, and a frame of arbitrary data. A node will reply to this packet the same as multicast-gather. In addition, if the receiving node is a member of the multicast group specified by the packet, the node will consider the frame of data as addressed to it and recieve it.
+
+The above protocol allows for all nodes on a given network to very quickly be updated on the members of any multicast group that the node wants to join or send frames to. This allows multicasts to be performed peer-to-peer. However, in some networks, peer-to-peer multicast is not as efficient as hub-and-spoke multicast. In those cases one may choose to use the replicator protocol for their network, described below.
+
+Nodes on a network can be given permission by the network controller to be ``multicast replicators''. Multicast replicators will replicate any multicast-frame packets they receive and forward them to every node they consider as a member of the multicast group specified by the packet. Nodes on a network will send their multicast frames only to a multicast replicator if one exists. If multiple exists it selects the one with the lowest path latency. If none exist the node will do sender-side replication to send their multicast frame to all members of the multicast group they know of.
+
+MAC address 0xffffffffffff is the MAC address for the ``broadcast'' multicast group. When they join a network, all nodes automatically like this group with an ADI value of their assigned IPv4 address. This allows a multicast frame to be sent to all members of a network, or to only a member with a specific IPv4 address.
+
+ARP emulation is performed by multicasting to group 0xffffffffffff with ADI the IPv4 address being looked up. IPv6 addresses in ZeroTier always contain 24-bits that identify a multicast group. Thus NDP emulation is more straightforward, as a node can multicast directly to that group to lookup that IPv6 address. If a node receives an IPv6 address it will automatically like the group identified by it.
+
+The only access control applied to a multicast group is whether or not a node has permission to join a network. In addition, multicast replicators replicate the plaintext of multicast-frames and re-encrypting each frame under only the peer-to-peer key of each's destination node. As such the plaintext of all multicast traffic over a network is effictively fully visible to all members of the network.
+
 
 
 
