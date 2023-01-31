@@ -96,7 +96,7 @@ Nodes may send ``multicast-like'' packets to any other node on the same network 
 
 Nodes may send ``multicast-gather'' packets to any other node on the same network. This packet contains the MAC address and ADI of a multicast group. It also contains a number called the ``gather limit''. A node will reply to a multicast-gather packet with a list of the addresses of every node it considers a member of that multicast group. This list will be of length at most the gather limit. No reply is sent if the list is empty.
 
-Nodes may send ``multicast-frame'' packets to any other node on the same network. This packet again contains the MAC address and ADI of a multicast group, a gather limit, and a frame of arbitrary data. A node will reply to this packet the same as multicast-gather. In addition, if the receiving node is a member of the multicast group specified by the packet, the node will consider the frame of data as addressed to it and recieve it.
+Nodes may send ``multicast-frame'' packets to any other node on the same network. This packet again contains the MAC address and ADI of a multicast group, a gather limit, and a frame of arbitrary data. A node will reply to this packet the same as multicast-gather. In addition, if the receiving node is a member of the multicast group specified by the packet, the node will consider the frame of data as addressed to it and receive it.
 
 The above protocol allows for all nodes on a given network to very quickly be updated on the members of any multicast group that the node wants to join or send frames to. This allows multicasts to be performed peer-to-peer. However, in some networks, peer-to-peer multicast is not as efficient as hub-and-spoke multicast. In those cases one may choose to use the replicator protocol for their network, described below.
 
@@ -108,7 +108,7 @@ MAC address 0xffffffffffff is the MAC address for the ``broadcast'' multicast gr
 
 ARP emulation is performed by multicasting to group 0xffffffffffff with ADI the IPv4 address being looked up. IPv6 addresses in ZeroTier always contain 24-bits that identify a multicast group. Thus NDP emulation is more straightforward, as a node can multicast directly to that group to lookup that IPv6 address. If a node receives an IPv6 address it will automatically like the group identified by it.
 
-The only access control applied to a multicast group is whether or not a node has permission to join a network. In addition, when a frame is replicated for multicast, it is the plaintext of the frame that is replicated, and then encrypted under only the peer-to-peer key of each destination node. As such the plaintext of all multicast traffic over a network is effictively fully visible to all members of the network.
+The only access control applied to a multicast group is whether or not a node has permission to join a network. In addition, when a frame is replicated for multicast, it is the plaintext of the frame that is replicated, and then encrypted under only the peer-to-peer key of each destination node. As such the plaintext of all multicast traffic over a network is effectively fully visible to all members of the network.
 
 
 
