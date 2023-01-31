@@ -89,7 +89,7 @@ ZeroTier offers ARP and NDP emulation to help client machines map a virtual IP a
 \section{ZeroTier Multicast Protocol}\label{sec:multicast}
 
 \begin{definition}[Multicast Group]
-	A \emph{multicast group} is a set of nodes identified with a unique MAC address and optionally an additional 32-bit number, called ``ADI''.
+	A \emph{multicast group} is a set of nodes identified with a unique MAC address and optionally a 32-bit number, called ``additional distinguishing information'', or ADI.
 \end{definition}
 
 Nodes may send ``multicast-like'' packets to any other node on the same network as them. This packet contains the MAC address and optional ADI of a multicast group they would like to join. Every node locally records what multicast-likes they have received, and considers a node to be a member of a multicast group if they have sent it a multicast-like packet. Nodes automatically update known peers about their group membership status through multicast-like packets.
