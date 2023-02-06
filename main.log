@@ -1,12 +1,12 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022) (preloaded format=pdflatex 2023.1.19)  31 JAN 2023 14:29
+This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022) (preloaded format=pdflatex 2023.2.6)  6 FEB 2023 11:50
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
  %&-line parsing enabled.
-**/home/mami/files/work/zerotier-docs/main.tex
-(/home/mami/files/work/zerotier-docs/main.tex
+**/home/mami/files/work/latex-docs/main.tex
+(/home/mami/files/work/latex-docs/main.tex
 LaTeX2e <2022-11-01> patch level 1
-L3 programming layer <2023-01-16> (/usr/local/texlive/2022/texmf-dist/tex/latex/base/article.cls
+L3 programming layer <2023-02-02> (/usr/local/texlive/2022/texmf-dist/tex/latex/base/article.cls
 Document Class: article 2022/07/02 v1.4n Standard LaTeX document class
 (/usr/local/texlive/2022/texmf-dist/tex/latex/base/size10.clo
 File: size10.clo 2022/07/02 v1.4n Standard LaTeX file (size option)
@@ -561,7 +561,7 @@ Package: inputenc 2021/02/14 v1.3d Input encoding file
 \inpenc@prehook=\toks53
 \inpenc@posthook=\toks54
 ) (/usr/local/texlive/2022/texmf-dist/tex/generic/babel/babel.sty
-Package: babel 2022/12/26 3.84 The Babel package
+Package: babel 2022/01/23 3.85 The Babel package
 \babel@savecnt=\count338
 \U@D=\dimen283
 \l@unhyphenated=\language87
@@ -709,21 +709,21 @@ Package hyperref Info: Link coloring ON on input line 27.
 
 {/usr/local/texlive/2022/texmf-var/fonts/map/pdftex/updmap/pdftex.map}] [2] [3] (./main.aux)
 Package rerunfilecheck Info: File `main.out' has not changed.
-(rerunfilecheck)             Checksum: 278A4991C626863F91E8F76A4B06552B;640.
+(rerunfilecheck)             Checksum: CBA67A3A10A1CFCDA7C43D1E98CC91BB;824.
  ) 
 Here is how much of TeX's memory you used:
- 24981 strings out of 476091
- 462494 string characters out of 5791548
- 1866330 words of memory out of 5000000
- 44938 multiletter control sequences out of 15000+600000
+ 24984 strings out of 476064
+ 462517 string characters out of 5790908
+ 1866346 words of memory out of 5000000
+ 44967 multiletter control sequences out of 15000+600000
  514456 words of font info for 39 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 84i,5n,89p,1300b,450s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 84i,5n,89p,1297b,450s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/local/texlive/2022/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb></usr/local/texlive/2022/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb></usr/local/texlive/2022/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/local/texlive/2022/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/local/texlive/2022/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb></usr/local/texlive/2022/texmf-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb>
-Output written on main.pdf (3 pages, 95120 bytes).
+Output written on main.pdf (3 pages, 96220 bytes).
 PDF statistics:
- 85 PDF objects out of 1000 (max. 8388607)
- 67 compressed objects within 1 object stream
- 18 named destinations out of 1000 (max. 500000)
- 45 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 90 PDF objects out of 1000 (max. 8388607)
+ 72 compressed objects within 1 object stream
+ 19 named destinations out of 1000 (max. 500000)
+ 53 words of extra memory for PDF output out of 10000 (max. 10000000)
 
