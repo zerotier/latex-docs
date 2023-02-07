@@ -116,7 +116,7 @@ The above protocol allows for all nodes on a given network to very quickly be up
 
 MAC address 0xffffffffffff is the MAC address for the ``broadcast'' multicast group. When any node joins a network, they automatically like this group with an ADI value of their assigned IPv4 address. This allows a multicast frame to be sent to all members of a network, or to only a member with a specific IPv4 address.
 
-ARP emulation is performed by multicasting to group 0xffffffffffff with ADI the IPv4 address being looked up. IPv6 addresses in ZeroTier always contain 24-bits that identify a multicast group. Thus NDP emulation is more straightforward, as a node can multicast directly to that group to lookup that IPv6 address. If a node receives an IPv6 address it will automatically like the group identified by it.
+ARP emulation is performed by multicasting to group 0xffffffffffff with ADI the IPv4 address being looked up. IPv6 addresses in ZeroTier always contain 24-bits that identify a multicast group. Thus NDP emulation is more straightforward, as a node can multicast directly to that group to lookup that IPv6 address. If a node is assigned an IPv6 address it will automatically like the group identified by it.
 
 The only access control applied to a multicast group is whether or not a node has permission to join a network. In addition, when a frame is replicated for multicast, it is the plaintext of the frame that is replicated, and then encrypted under only the peer-to-peer key of each destination node. As such the plaintext of all multicast traffic over a network is effectively fully visible to all members of the network.
 
