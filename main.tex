@@ -33,7 +33,7 @@
 For clarity's sake, when I use the name ZeroTier, unless otherwise specified, I am referring to the V1 ZeroTier protocol.
 
 \begin{definition}[Node]
-	A \emph{node} in ZeroTier is a client machine running the ZeroTier protocol. A node is capable of making peer-to-peer, end-to-end encrypted ethernet connections with any other node, so long as it knows the address of the other node, and the other node chooses to respond to its connection. Public keys are used to identify and authenticate nodes.
+	A \emph{node} in ZeroTier is a client machine running the ZeroTier protocol. A node is capable of making peer-to-peer, end-to-end encrypted ethernet connections with any other node, so long as it knows the address of the other node, and the other node chooses to respond to its connection. Public keys are used to identify and authenticate nodes. Currently, ZeroTier exclusively uses Curve25519 Diffie-Hellman for public and private keys.
 \end{definition}
 
 Since all nodes are capable of communicating with each other, they form a global virtual ethernet network.
@@ -74,6 +74,12 @@ Network traffic in ZeroTier is peer-to-peer and end-to-end-encrypted. Once a sec
 
 Due to security and reliability concerns it is not yet possible for independent administrators to operate their own root servers. However it is possible to operate mirrors of the root servers. These mirrors, referred to as ``moons'' create a local copy of some subset of the root server database, and will defer to the root servers if a request is made of them for an address not present in their database.
 
+\section{ZeroTier Transport Protocol}
+
+To begin any connection through ZeroTier, the initiator node must send an unencrypted ``hello'' packet to the destination node. This hello includes the protocol version of the initiator, packet timestamp and the identity of the initiator. The destination node may decide to end the connection by simply not replying to this packet. If it does want to continue the connection and establish a secure session, it will perform Curve25519 key agreement between the initiator's identity and its own private key, generating a symmetric session key. It will then reply to the hello with a packet containing the same information about the destination node. The initiator will be able to use this to do key agreement with its private key and generate an identical session key. This session key is then used to encrypt all future packets between the two nodes. The encryption is performed using AES-GMAC-SIV with a 64-bit randomized IV\@. The Salsa20-Poly1305 stream cipher may also be used, in which case the 64-bit IV is used instead to mangle the session key per-packet.
+
+Nodes will request to rekey their sessions every 60 seconds using the same protocol above. However the hello and hello reply packets are encrypted under the previous session key instead of plaintext. Rekeying requests will reset the heartbeat timer to prevent unnecessary traffic.
+
 \section{ZeroTier Rendezvous Protocol}
 
 All nodes start only knowing a few paths to the root servers. ZeroTier is able to bootstrap this into a peer-to-peer connection with any other node. Given the address of a node, a source node will contact a random root server to request the identity of the node with that address, the destination node. The root server will look up the destination node's identity and return it. Once the source node has its identity, it will then choose another random root server to request a rendezvous with the destination node. The root server will then search through all known paths to both the destination and the source nodes, and choose a pair most likely to succeed in back and forth communication. To the source node it will send the destination's path, and to the destination node it will send the source's path. Upon receipt both nodes will attempt to contact each other through the given paths. If either contact is successful the recipient will cache the successful path. From then on both node will choose the highest quality cached path to communicate with each other. Upon receipt of any packet from a node, the path it was received over is either added to the path cache, or updated in the cache to help with quality determination.
@@ -113,7 +119,11 @@ The only access control applied to a multicast group is whether or not a node ha
 
 \section{ZeroTier Heartbeat Protocol}
 
-test
+Every node creates a local database of ever peer it has rendezvous with. This database stores the peer's identity and a table of up to 64 known paths to the peer. Several quality of service metrics and timestamps are included in this database to help with making decisions throughout the ZeroTier protocol about which peers to contact or which paths to use.
+
+Every 14 seconds, for every known path, an ``echo'' packet is sent over it to the peer. Nodes are expected to reply to echo packets as soon as they are received over the same path they received it over. It is when the reply to the echo is received that the node can confirm that the path is still alive. If any packet is received over a specific path, the expiry timestamp on that path is updated to the current time. If the current time and the expiry timestamp on a path ever differ by over 243 seconds, the path is considered expired and is deleted from the table of known paths.
+
+The rendezvous protocol is specifically designed to facilitate hole punching through most NATs. However some NATs keep these holes open for very short periods of time unless the connection through the hole is actively used. The heartbeat protocol is designed to combat this and keep paths open and alive for as long as possible. This is especially important for keeping paths to the root servers alive, otherwise it would not be possible for nodes to initiate new connections.
 
 
 \end{document}
