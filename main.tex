@@ -18,6 +18,8 @@
 \usepackage{cite}
 \usepackage{blindtext}
 
+\usepackage{bytefield}
+
 \input{macro.tex}
 
 \title{ZeroTier Protocol}
@@ -52,16 +54,16 @@ Since all nodes are capable of communicating with each other, they form a global
 
 
 \begin{definition}[Network Identifier]
-	A \emph{network identifier} is a 64-bit number consisting of an address followed by a 16-bit ``network number''.
+	A \emph{network id} is a 64-bit number consisting of an address followed by a 16-bit ``network number''.
 \end{definition}
 
 \begin{definition}[Network Controller]
-	A \emph{network controller} is simply a node that has had its address distributed as part of a network identifier. Network controllers are able to define a sub-network of the ZeroTier global virtual network. Nodes are members of this network if and only if they have been given permission to join it by the network controller. The network controller is also able to distribute certificates, credentials and network rules to members of its network, giving it fine control over all interactions between nodes. It is not however able to decrypt or modify traffic over its network that was not directly sent to it.
+	A \emph{network controller} is simply a node that has had its address distributed as part of a network id. Network controllers are able to define a sub-network of the ZeroTier global virtual network. Nodes are members of this network if and only if they have been given permission to join it by the network controller. The network controller is also able to distribute certificates, credentials and network rules to members of its network, giving it fine control over all interactions between nodes. It is not however able to decrypt or modify traffic over its network that was not directly sent to it.
 \end{definition}
 Such networks create their own virtual IP address space. When a node joins a network, it is assigned a virtual IP address on this network, and other nodes on the same network can use that IP address to contact it. The network controller decides how IP addresses are assigned, and whether to use IPv4 or IPv6. To the host machine running ZeroTier, a ZeroTier network looks and behaves as if it is a LAN or WAN that the machine is physically connected to.
 
 \begin{definition}[MAC Address]
-	The \emph{MAC address} of a node in ZeroTier is a 48-bit number consisting of the address of the node xor'ed with a network identifier. As such a single node may have multiple MAC addresses but each of these MAC addresses is unique to each ZeroTier network it is a member of. These are the virtual MAC addresses assigned to machines for the sake of ethernet simulation.
+	The \emph{MAC address} of a node in ZeroTier is a 48-bit number consisting of the address of the node xor'ed with a network id. As such a single node may have multiple MAC addresses but each of these MAC addresses is unique to each ZeroTier network it is a member of. These are the virtual MAC addresses assigned to machines for the sake of ethernet simulation.
 \end{definition}
 
 \begin{definition}[Root Servers]
@@ -75,6 +77,25 @@ Network traffic in ZeroTier is peer-to-peer and end-to-end-encrypted. Once a sec
 Due to security and reliability concerns it is not yet possible for independent administrators to operate their own root servers. However it is possible to operate mirrors of the root servers. These mirrors, referred to as ``moons'' create a local copy of some subset of the root server database, and will defer to the root servers if a request is made of them for an address not present in their database.
 
 \section{ZeroTier Transport Protocol}
+
+%\begin{bytefield}[bitwidth=1.1em]{32}
+%	\bitheader{0-31} \\
+%	\begin{rightwordgroup}{RTP \\  Header}
+%			\bitbox{2}{V=2} & \bitbox{1}{P} & \bitbox{1}{X}
+%			& \bitbox{4}{CC} & \bitbox{1}{M} & \bitbox{7}{PT}
+%			& \bitbox{16}{sequence number} \\
+%			\bitbox{32}{timestamp}
+%	\end{rightwordgroup} \\
+%	\bitbox{32}{synchronization source (SSRC) id} \\
+%	\wordbox[tlr]{1}{contributing source (CSRC) ids} \\
+%	\wordbox[blr]{1}{$\cdots$} \\
+%	\begin{rightwordgroup}{RTP \\ Payload}
+%			\wordbox[tlr]{3}{MPEG-4 Visual stream (byte aligned)} \\
+%			\bitbox[blr]{16}{}
+%			& \bitbox{16}{\dots\emph{optional} RTP padding}
+%	\end{rightwordgroup}
+%\end{bytefield}
+
 
 To begin any connection through ZeroTier, the initiator node must send an unencrypted ``hello'' packet to the destination node. This hello includes the protocol version of the initiator, packet timestamp and the identity of the initiator. The destination node may decide to end the connection by simply not replying to this packet. If it does want to continue the connection and establish a secure session, it will perform Curve25519 key agreement between the initiator's identity and its own private key, generating a symmetric session key. It will then reply to the hello with a packet containing the protocol version, packet timestamp and the identity of the destination. The initiator will be able to use this to perform key agreement with its private key and generate an identical session key. These session keys are then used to end-to-end encrypt all future packets between the two nodes. The encryption is performed using AES-GMAC-SIV with a 64-bit randomized IV\@. The Salsa20-Poly1305 stream cipher may also be used, in which case the 64-bit IV is used instead to mangle the session key per-packet.
 
@@ -92,7 +113,7 @@ The reason two paths are simultaneously attempted to establish contact is to ope
 
 When ZeroTier is installed into a host machine, it will generate a random public and private key. The private key is saved to the host machine. The public key is used to generate an address and identity. This identity is submitted to a random root server, and if the root server confirms that the node's address is not in use, it is saved to both the host machine and the root server. If it is in use the host machine will generate a new keypair and try again.
 
-Next the host machine will ask for a network identifier from the user. When this is given the host machine will rendezvous with the network controller for that network. Upon a successful rendezvous the node will request to join the network controller's network. If the request is approved, the network controller assigns it a virtual IP address, and sends it any network-specific credentials or rules.
+Next the host machine will ask for a network id from the user. When this is given the host machine will rendezvous with the network controller for that network. Upon a successful rendezvous the node will request to join the network controller's network. If the request is approved, the network controller assigns it a virtual IP address, and sends it any network-specific credentials or rules.
 
 ZeroTier offers ARP and NDP emulation to help client machines map a virtual IP address on a given ZeroTier network to the ZeroTier address of its node. However these protocols are not emulated 1 to 1, in particular because ARP scales poorly on large networks. Instead, when a host machine wishes to connect to a new virtual IP address, it multicasts its request to connect directly to the owner of that virtual IP address, the destination node. See \sectionref{sec:multicast} for more details on ZeroTier multicast. If the destination node decides to connect, it will rendezvous with the host machine to established a peer-to-peer connection. Identities and paths are always cached so in the future the host machine is able to resolve the IP address to a path to the destination node without the help of the network controller or a root server.
 
@@ -128,5 +149,43 @@ Every 14 seconds, for every known path, an ``echo'' packet is sent over it to th
 
 The rendezvous protocol is specifically designed to facilitate hole punching through most NATs. However some NATs keep these holes open for very short periods of time unless the connection through the hole is actively used. The heartbeat protocol is designed to combat this and keep paths open and alive for as long as possible. This is especially important for keeping paths to the root servers alive, otherwise it would not be possible for nodes to initiate new connections.
 
+\section{ZeroTier Network Certificates}
+
+
+\begin{definition}[Network Certificate]
+	\emph{Network certificates} are sequences of bytes issued by a network controller that specify certain permissions or capabilities a node has on the network controller's network. They are cryptographically signed by the network controller with its private key, allowing all network members to verify authenticity. All network certificates include a creation timestamp and lifetime written by the controller. Certificates also include a network id and an address of a node. These specify respectively, which network a certificate was issued on and what node owns this certificate. Nodes will locally verify all of these fields on any received certificate to confirm authenticity.
+\end{definition}
+
+Nodes will never use their local clock to determine whether a certificate has expired, instead they are compared relative to each other based on the type of certificate received. Thus it is important that the network controller has a secure and accurate source of unix time. All other network nodes can reliably check for expiry without a secure source of time.
+
+Certificates, once created, are usually immediately sent to their owners, and no one else. This places the bandwidth cost of distributing certificates onto only the owner, and the owner only needs to send these certificates to nodes it intends to communicate with.
+
+\begin{definition}[Certificate of Membership]
+	A \emph{Certificate of Membership} is the simplest form of certificate. It contains no extra information and determines whether or not other nodes consider the owner of the certificate to be a member of the specified network.
+\end{definition}
+
+It is the responsibility of each network member to present its certificate of membership to any other member immediately after completing the transport protocol handshake. Members will require to have been sent a valid certificate of membership before engaging in most forms of communication, especially those that contain a network payload or data frame. Otherwise the connection will simply be ignored.
+
+\begin{definition}[Certificate of Ownership]
+	A \emph{Certificate of Ownership} contains an IPv4 address and an IPv6 address. A node is considered as owning an IPv4 or IPv6 address if it has a Certificate of Ownership containing those addresses.
+\end{definition}
+
+It is required that each network member present their certificate of ownership at the same time as their certificate of membership, to proof that they have not spoofed their IPv4 or IPv6 address. Network members will again ignore connections that do not present certificates matching the IP address they were expecting to connect to.
+
+\begin{definition}[Capability]
+	A \emph{Capability}
+\end{definition}
+
+\begin{definition}[Tags]
+	\emph{Tags} are key-value pairs that are contained in a tag certificate. These key-value pairs by themselves carry no meaning, but can be used by the network rules engine to create custom, tag-based permissions on a network. A single tag certificate can contain multiple tags, and multiple tags distributed under a single certificate cannot be broken up into multiple certificates except by the network controller.
+\end{definition}
+
+\begin{definition}[Revocation]
+	A \emph{Revocation} is a certificate that revokes membership to a given network. It contains no extra information, but unlike other certificates, it only contains one timestamp field and no lifetime. Instead the timestamp field is the time at which the revocation expires. Any certificate of membership issued to the specified node before the expiration timestamp will be considered revoked, but any issued after are considered valid. This allows a network controller to immediately revoke all existing certificates of membership for a given node, while still potentially allowing it to reauthorize the node later.
+\end{definition}
+
+Instead of being sent to the node being revoked, revocations are instead sent from the network controller to all members of the network. If a member sees a revocation it has not previously recorded, it will also send a copy of it to all other members it knows of. This is a rumor mill algorithm that guarantees that so long as a node is connected to the network in some way, it will receive the revocation.
+
+Only certificates of membership can be revoked with a revocation, all other certificates will last until they expire. If a node is offline while a revocation is distributed it will not be able to receive it.
 
 \end{document}
