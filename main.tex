@@ -185,7 +185,7 @@ It is the responsibility of each network member to present its certificate of me
 	A \emph{Certificate of Ownership} contains an IPv4 address and an IPv6 address. A node is considered as owning an IPv4 or IPv6 address if it has a Certificate of Ownership containing those addresses.
 \end{definition}
 
-It is required that each network member present their certificate of ownership at the same time as their certificate of membership, to proof that they have not spoofed their IPv4 or IPv6 address. Network members will again ignore connections that do not present certificates matching the IP address they were expecting to connect to.
+It is required that each network member present their certificate of ownership at the same time as their certificate of membership, to proof that they have not spoofed their IPv4 or IPv6 address. Network members will again ignore connections that do not present valid certificates matching the IP address they were expecting to connect to.
 
 \begin{definition}[Capability]
 	A \emph{Capability} is a certificate that contains byte-code representing the network rules for the specified network. A node that has received this certificate will run the code within every time it attempts to send or receive a packet containing an ethernet frame. This code is the foundation of the ZeroTier rules engine. To summarize briefly, it will decide what action should be taken with the new packet, including potentially dropping it entirely.
