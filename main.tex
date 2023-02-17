@@ -199,7 +199,7 @@ It is required that each network member present their certificate of ownership a
 	A \emph{Revocation} is a certificate that revokes membership to a given network. It contains no extra information, but unlike other certificates, it only contains one timestamp field and no lifetime. Instead the timestamp field is the time at which the revocation expires. Any certificate of membership issued to the specified node before the expiration timestamp will be considered revoked, but any issued after are considered valid. This allows a network controller to immediately revoke all existing certificates of membership for a given node, while still potentially allowing it to reauthorize the node later.
 \end{definition}
 
-Instead of being sent to the node being revoked, revocations are instead sent from the network controller to all members of the network. If a member sees a revocation it has not previously recorded, it will also send a copy of it to all other members it knows of. This is a rumor mill algorithm that guarantees that so long as a node is online and connected to the network in some way, it will receive the revocation.
+Instead of being sent to the node being revoked, revocations are instead sent from the network controller to all members of the network. If a member sees a revocation it has not previously recorded, it will also send a copy of it to all other members it knows of. This is a rumor mill algorithm that guarantees that so long as a node is online and connected to the network through some path, it will receive the revocation.
 
 \subsection*{Security Considerations}
 
