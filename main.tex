@@ -32,13 +32,13 @@
 
 \section{Definitions}
 
-For clarity's sake, when I use the name ZeroTier, unless otherwise specified, I am referring to Version 1 (V1) of the ZeroTier protocol. This is to disambiguate between the upcoming V2 ZeroTier protocol, and ZeroTier Inc., the organization which maintains both.
+For clarity's sake, when I use the name ZeroTier, unless otherwise specified, I am referring to Version 1 (V1) of the ZeroTier protocol. This is to disambiguate between the upcoming V2 ZeroTier protocol, and ZeroTier Inc., the organization which maintains both. The goal of ZeroTier in essence is to provide a secure, reliable and scalable protocol for implementing a computer network with no tiers, also known as a flat network.
 
 \begin{definition}[Node]
 	A \emph{node} in ZeroTier is a client machine running the ZeroTier protocol. A node is capable of making peer-to-peer, end-to-end encrypted ethernet connections with any other node, so long as it knows the address of the other node, and the other node chooses to respond to its connection. Public keys are used to identify and authenticate nodes. Currently, ZeroTier exclusively uses Curve25519 Diffie-Hellman for public and private keys.
 \end{definition}
 
-The ZeroTier protocol emulates the ethernet protocol for the sake of being as low down on the protocol stack as practical, improving compatibility and limiting metadata leakage. Since all nodes are capable of communicating with each other, they form a global virtual ethernet network.
+The ZeroTier protocol emulates the ethernet protocol for the sake of being as low down on the protocol stack as practical, improving compatibility and limiting complexity. Since all nodes are capable of communicating with each other, they form a global virtual ethernet network.
 
 \begin{definition}[Address]
 	The \emph{address} of a node in ZeroTier is a uniquely identifying 40-bit number derived from the hash of the node's public key.
