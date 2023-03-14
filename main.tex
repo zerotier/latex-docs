@@ -22,7 +22,7 @@
 
 \input{macro.tex}
 
-\title{ZeroTier Protocol}
+\title{ZeroTier Version 2 Protocol}
 \author{Monica Moniot}
 \date{\today}
 
@@ -32,13 +32,13 @@
 
 \section{Definitions}
 
-For clarity's sake, when I use the name ZeroTier, unless otherwise specified, I am referring to Version 1 (V1) of the ZeroTier protocol. This is to disambiguate between the upcoming V2 ZeroTier protocol, and ZeroTier Inc., the organization which maintains both. The goal of ZeroTier in essence is to provide a secure, reliable and scalable protocol for implementing a computer network with no tiers, also known as a flat network.
+For clarity's sake, when I use the name ZeroTier, unless otherwise specified, I am referring to Version 2 (V2) of the ZeroTier protocol. This is to disambiguate between the V1 ZeroTier protocol, and ZeroTier Inc., the organization which maintains both. The goal of ZeroTier in essence is to provide a secure, reliable and scalable protocol for implementing a computer network with no tiers, also known as a flat network.
 
 \begin{definition}[Node]
-	A \emph{node} in ZeroTier is a client machine running the ZeroTier protocol. A node is capable of making peer-to-peer, end-to-end encrypted ethernet connections with any other node, so long as it knows the address of the other node, and the other node chooses to respond to its connection. Public keys are used to identify and authenticate nodes. Currently, ZeroTier exclusively uses Curve25519 Diffie-Hellman for public and private keys.
+	A \emph{node} in ZeroTier is a client machine running the ZeroTier protocol. A node is capable of making peer-to-peer, end-to-end encrypted ethernet connections with any other node, so long as it knows the address of the other node, and the other node chooses to respond to its connection. Public keys are used to identify and authenticate nodes.
 \end{definition}
 
-The ZeroTier protocol emulates the ethernet protocol for the sake of being as low down on the protocol stack as practical, improving compatibility and limiting complexity. Since all nodes are capable of communicating with each other, they form a global virtual ethernet network.
+The ZeroTier protocol emulates the ethernet protocol for the sake of being as low down on the protocol stack as practical, improving compatibility and limiting complexity.
 
 \begin{definition}[Address]
 	The \emph{address} of a node in ZeroTier is a uniquely identifying 40-bit number derived from the hash of the node's public key.
@@ -53,66 +53,73 @@ The ZeroTier protocol emulates the ethernet protocol for the sake of being as lo
 \end{definition}
 
 
-\begin{definition}[Network Identifier]
-	A \emph{network id} is a 64-bit number consisting of an address followed by a 16-bit ``network number''. This allows a single node to control multiple networks.
-\end{definition}
+%\begin{definition}[Network Identifier]
+%	A \emph{network id} is a 64-bit number consisting of an address followed by a 16-bit ``network number''. This allows a single node to control multiple networks.
+%\end{definition}
 
-\begin{definition}[Network Controller]
-	A \emph{network controller} is simply a node that has had its address distributed as part of a network id. Network controllers are able to define a sub-network of the ZeroTier global virtual network. Nodes are members of this network if and only if they have been given permission to join it by the network controller. The network controller is also able to distribute certificates, credentials and network rules to members of its network, giving it fine control over all interactions between nodes. It is not however able to decrypt or modify traffic over its network that was not directly sent to it.
-\end{definition}
+%\begin{definition}[Network Controller]
+%	A \emph{network controller} is simply a node that has had its address distributed as part of a network id. Network controllers are able to define a sub-network of the ZeroTier global virtual network. Nodes are members of this network if and only if they have been given permission to join it by the network controller. The network controller is also able to distribute certificates, credentials and network rules to members of its network, giving it fine control over all interactions between nodes. It is not however able to decrypt or modify traffic over its network that was not directly sent to it.
+%\end{definition}
 
-Such networks create their own virtual IP address space. When a node joins a network, it is assigned a virtual IP address on this network, and other nodes on the same network can use that IP address to contact it. The network controller decides how IP addresses are assigned, and whether to use IPv4 or IPv6.
+%Such networks create their own virtual IP address space. When a node joins a network, it is assigned a virtual IP address on this network, and other nodes on the same network can use that IP address to contact it. The network controller decides how IP addresses are assigned, and whether to use IPv4 or IPv6.
 
-To the host machine running ZeroTier, a ZeroTier network looks and behaves as if it is a LAN or WAN that the machine is physically connected to. Ethernet frames posted by the host operating system will be encrypted according to the protocol in \sectionref{sec:transport} and sent over the internet to their destination. Such IP packets, when received by their destination, will be decrypted, translated and posted to the host OS as if they had been received over ethernet.
+%To the host machine running ZeroTier, a ZeroTier network looks and behaves as if it is a LAN or WAN that the machine is physically connected to. Ethernet frames posted by the host operating system will be encrypted according to the protocol in \sectionref{sec:transport} and sent over the internet to their destination. Such IP packets, when received by their destination, will be decrypted, translated and posted to the host OS as if they had been received over ethernet.
 
-\begin{definition}[MAC Address]
-	The \emph{MAC address} of a node in ZeroTier is a 48-bit number consisting of the address of the node xor'ed with a network id. As such a single node may have multiple MAC addresses but each of these MAC addresses is unique to each ZeroTier network it is a member of. These are the virtual MAC addresses assigned to machines for the sake of ethernet simulation.
-\end{definition}
+%\begin{definition}[MAC Address]
+%	The \emph{MAC address} of a node in ZeroTier is a 48-bit number consisting of the address of the node xor'ed with a network id. As such a single node may have multiple MAC addresses but each of these MAC addresses is unique to each ZeroTier network it is a member of. These are the virtual MAC addresses assigned to machines for the sake of ethernet simulation.
+%\end{definition}
 
-\begin{definition}[Root Servers]
-	\emph{Root servers} are nodes operated by ZeroTier Inc. that centrally handle the job of mapping all global addresses to their matching identities, and mapping addresses to possible paths to the owner of that address. Within the protocol, they are responsible for public key distribution and for coordinating initial contact between newly connecting machines.
-\end{definition}
+%\begin{definition}[Root Servers]
+%	\emph{Root servers} are nodes operated by ZeroTier Inc. that centrally handle the job of mapping all global addresses to their matching identities, and mapping addresses to possible paths to the owner of that address. Within the protocol, they are responsible for public key distribution and for coordinating initial contact between newly connecting machines.
+%\end{definition}
 
-Once keys are distributed and a session is established nodes will no longer contact root servers regarding that session. The only exception being if the path connecting two nodes goes down, and a new path needs to be established, or if for whatever reason a direct path between two nodes cannot be established, so the nodes decide to route their traffic through their shared connection to the root servers.
+%Once keys are distributed and a session is established nodes will no longer contact root servers regarding that session. The only exception being if the path connecting two nodes goes down, and a new path needs to be established, or if for whatever reason a direct path between two nodes cannot be established, so the nodes decide to route their traffic through their shared connection to the root servers.
 
-Due to security and reliability concerns it is not possible for independent administrators to operate their own root servers. However it is possible to operate mirrors of the root servers. These mirrors, referred to as ``moons'' create a local copy of some subset of the root server database, and will defer to the root servers if a request is made of them for an address not present in their database. Decentralized and independently operated root servers will be available in the V2 ZeroTier protocol.
+%Due to security and reliability concerns it is not possible for independent administrators to operate their own root servers. However it is possible to operate mirrors of the root servers. These mirrors, referred to as ``moons'' create a local copy of some subset of the root server database, and will defer to the root servers if a request is made of them for an address not present in their database. Decentralized and independently operated root servers will be available in the V2 ZeroTier protocol.
 
-\subsection*{Root Servers and the Possibility of Man-in-the-Middle}
+%\subsection*{Root Servers and the Possibility of Man-in-the-Middle}
 
-Network traffic in ZeroTier is peer-to-peer and end-to-end encrypted. Once a secure session is established between two nodes, it is cryptographically infeasible for the ZeroTier organization to read or modify any node's network traffic. However, it is possible for the ZeroTier organization to perform a man-in-the-middle attack on newly connecting nodes that have not yet established a session. This is a fundamental vulnerability of any public-key distribution scheme, so a lot of care was put into making such an attack as difficult as possible and easy to detect if attempted.
+%Network traffic in ZeroTier is peer-to-peer and end-to-end encrypted. Once a secure session is established between two nodes, it is cryptographically infeasible for the ZeroTier organization to read or modify any node's network traffic. However, it is possible for the ZeroTier organization to perform a man-in-the-middle attack on newly connecting nodes that have not yet established a session. This is a fundamental vulnerability of any public-key distribution scheme, so a lot of care was put into making such an attack as difficult as possible and easy to detect if attempted.
 
-If a root server is compromised, when it is asked to map an address to its node's identity, the root can instead brute-force the 40-bits of the address to generate a matching identity. It can then respond with this identity it controls instead of the correct one. The root server must then sabotage the ZeroTier rendezvous protocol, described in \sectionref{sec:rendezvous}, so that network traffic between these two nodes is only routed through the root servers. Due to root choice randomization this attack is significantly less successful if just one uncompromised root is online. Once all of this is done a classical man-in-the-middle attack can follow. Any out-of-band confirmation that the identity of the node being contacted is the same as the identity returned by the root will render this attack impossible. If they do not match then the presence of a man-in-the-middle is made obvious.
+%If a root server is compromised, when it is asked to map an address to its node's identity, the root can instead brute-force the 40-bits of the address to generate a matching identity. It can then respond with this identity it controls instead of the correct one. The root server must then sabotage the ZeroTier rendezvous protocol, described in \sectionref{sec:rendezvous}, so that network traffic between these two nodes is only routed through the root servers. Due to root choice randomization this attack is significantly less successful if just one uncompromised root is online. Once all of this is done a classical man-in-the-middle attack can follow. Any out-of-band confirmation that the identity of the node being contacted is the same as the identity returned by the root will render this attack impossible. If they do not match then the presence of a man-in-the-middle is made obvious.
 
-\hyperref[def:cert_of_membership]{Certificates of Membership} contain a hash of the full identity it was issued to, signed by the network controller. This means that upon receipt of a valid certificate of membership, a node can know the network controller agrees with the root server on the identity of node being contacted. Therefore, for a root server to be able to man-in-the-middle a session after the receipt of a certificate of membership, it would have to either also man-in-the-middle that node's session with the network controller, or compromise and collude with the network controller.
+%\hyperref[def:cert_of_membership]{Certificates of Membership} contain a hash of the full identity it was issued to, signed by the network controller. This means that upon receipt of a valid certificate of membership, a node can know the network controller agrees with the root server on the identity of node being contacted. Therefore, for a root server to be able to man-in-the-middle a session after the receipt of a certificate of membership, it would have to either also man-in-the-middle that node's session with the network controller, or compromise and collude with the network controller.
 
-\section{ZeroTier Transport Protocol}\label{sec:transport}
+\section{ZeroTier Secure Session Protocol}\label{sec:transport}
 
-%\begin{bytefield}[bitwidth=1.1em]{32}
-%	\bitheader{0-31} \\
-%	\begin{rightwordgroup}{RTP \\  Header}
-%			\bitbox{2}{V=2} & \bitbox{1}{P} & \bitbox{1}{X}
-%			& \bitbox{4}{CC} & \bitbox{1}{M} & \bitbox{7}{PT}
-%			& \bitbox{16}{sequence number} \\
-%			\bitbox{32}{timestamp}
-%	\end{rightwordgroup} \\
-%	\bitbox{32}{synchronization source (SSRC) id} \\
-%	\wordbox[tlr]{1}{contributing source (CSRC) ids} \\
-%	\wordbox[blr]{1}{$\cdots$} \\
-%	\begin{rightwordgroup}{RTP \\ Payload}
-%			\wordbox[tlr]{3}{MPEG-4 Visual stream (byte aligned)} \\
-%			\bitbox[blr]{16}{}
-%			& \bitbox{16}{\dots\emph{optional} RTP padding}
-%	\end{rightwordgroup}
-%\end{bytefield}
+ZeroTier uses a FIPS compliant implementation of Noise\_XKpsk3 as its transport protocol. To understand the following section, we will assume a basic familiarity with the Noise protocol, documented here https://noiseprotocol.org/noise.html. We will primarily be explaining the ZeroTier transport protocol in relation to the specification of the noise protocol. Noise has a very particular naming scheme for instanciations of it, and our full protocol name is
+$$\texttt{Noise\_XKpsk3\_P384\_AESGCM\_SHA384\_hybridKyber1024}.$$
+We only implement the above protocol with those static choices of cryptographic primitives. \texttt{Noise\_XKpsk3} specifies we are implementing Noise XK with a preshared symmetric secret used on the third round of our handshake. \texttt{P384} specifies we are using eleptic curve P384 as our FIPS compliant Diffie-Helman (DH) primitive. \texttt{AESGCM} specifies we are using the AES block cipher in GCM mode as our symmetric primitive. \texttt{SHA384} is our FIPS compliant hash function. And finally, \texttt{hybridKyber1024} specifies we are adding hybrid encryption onto Noise using an ephemeral Kyber1024 DH handshake.
+
+There is one and only one difference between the ZeroTier Secure Session Protocol and Noise\_XKpsk3, and that is our choice of key derivation function (KDF). Noise specifies the use of HKDF, https://eprint.iacr.org/2010/264.pdf, but despite it's strength, it has not yet been approved under FIPS. This gave us two options, we could either modify HKDF to pass any output key through an addition FIPS KDF, or we could entirely replace HKDF with a FIPS KDF. We decided on the later, using NIST's currently recommended KDF in HMAC counter mode, https://csrc.nist.gov/publications/detail/sp/800-108/archive/2008-11-06. To be specific, our implementation of `$\text{MixKey}(input\_key\_material)$' is as follows:
+\begin{itemize}
+  \item Sets $ck = \text{HMAC}(ck,\ input\_key\_material)$.
+  \item Sets $temp\_k = \text{HMAC}(ck,\ [1]_2\ ||\ key\_label\ ||\ 0x00\ ||\ 0\ ||\ [256]_2)$.
+  \item Truncates $temp\_k$ to 256 bits (64 bytes).
+  \item Calls InitializeKey$(temp\_k)$
+\end{itemize}
+where $key\_label$ is a byte whose value is unique for each $temp\_k$ that is produced for encryption during the Noise handshake.
+
+And our implementation of `$\text{Split}()$' is as follows:
+\begin{itemize}
+  \item Sets $temp\_k1 = \text{HMAC}(ck,\ [1]_2\ ||\ b'A'\ ||\ 0x00\ ||\ 0\ ||\ [256]_2)$.
+  \item Sets $temp\_k2 = \text{HMAC}(ck,\ [1]_2\ ||\ b'B'\ ||\ 0x00\ ||\ 0\ ||\ [256]_2)$.
+  \item Truncates $temp\_k1$ and $temp\_k2$ to 256 bits (64 bytes).
+  \item Creates two new CipherState objects c1 and c2.
+  \item Calls c1.InitializeKey(temp\_k1) and c2.InitializeKey(temp\_k2).
+  \item Returns (c1, c2).
+\end{itemize}
 
 
-To begin any connection through ZeroTier, the initiator node must send an unencrypted ``hello'' packet to the destination node. This hello includes the protocol version of the initiator, packet timestamp and the identity of the initiator. The destination node may decide to end the connection by simply not replying to this packet. If it does want to continue the connection and establish a secure session, it will perform Curve25519 key agreement between the initiator's identity and its own private key, generating a symmetric session key. It will then reply to the hello with a packet containing the protocol version, packet timestamp and the identity of the destination. The initiator will be able to use this to perform key agreement with its private key and generate an identical session key. These session keys are then used to end-to-end encrypt all future packets between the two nodes. The encryption is performed using AES-GMAC-SIV with a 64-bit randomized IV\@. The Salsa20-Poly1305 stream cipher may also be used, in which case the 64-bit IV is used instead to mangle the session key per-packet.
+%To begin any connection through ZeroTier, the initiator node must send an unencrypted ``hello'' packet to the destination node. This hello includes the protocol version of the initiator, packet timestamp and the identity of the initiator. The destination node may decide to end the connection by simply not replying to this packet. If it does want to continue the connection and establish a secure session, it will perform Curve25519 key agreement between the initiator's identity and its own private key, generating a symmetric session key. It will then reply to the hello with a packet containing the protocol version, packet timestamp and the identity of the destination. The initiator will be able to use this to perform key agreement with its private key and generate an identical session key. These session keys are then used to end-to-end encrypt all future packets between the two nodes. The encryption is performed using AES-GMAC-SIV with a 64-bit randomized IV\@. The Salsa20-Poly1305 stream cipher may also be used, in which case the 64-bit IV is used instead to mangle the session key per-packet.
 
-Packets in ZeroTier are broken up into fixed size units based upon the maximum transmission unit of the physical link the host machine has to communicate over. Each unit is then individually transmitted to the packet's destination. These are reassembled at their destination to obtain the original packet. Similar to UDP, ZeroTier provides no guarantee that all packets arrive in-order or that they arrive at all. ZeroTier does however cryptographically guarantee that if a packet is received, it is authentic and has not been altered from its original form.
+%Packets in ZeroTier are broken up into fixed size units based upon the maximum transmission unit of the physical link the host machine has to communicate over. Each unit is then individually transmitted to the packet's destination. These are reassembled at their destination to obtain the original packet. Similar to UDP, ZeroTier provides no guarantee that all packets arrive in-order or that they arrive at all. ZeroTier does however cryptographically guarantee that if a packet is received, it is authentic and has not been altered from its original form.
 
-\subsection*{Security Considerations}
+%\subsection*{Security Considerations}
 
-The V1 ZeroTier transport protocol does not provide identity hiding, forward secrecy nor replay protection. As such it is important for the security of both oneself and one's peers that one's private key is not compromised. And if it is, all connections to peers authenticated with it ought to be immediately terminated and any certificates revoked. Replay protection can be obtained by using any protocol higher up on the protocol stack that implements packet deduplication, such as TCP\@. Identity hiding, forward secrecy and replay protection will all be security properties of the V2 ZeroTier transport protocol.
+%The V1 ZeroTier transport protocol does not provide identity hiding, forward secrecy nor replay protection. As such it is important for the security of both oneself and one's peers that one's private key is not compromised. And if it is, all connections to peers authenticated with it ought to be immediately terminated and any certificates revoked. Replay protection can be obtained by using any protocol higher up on the protocol stack that implements packet deduplication, such as TCP\@. Identity hiding, forward secrecy and replay protection will all be security properties of the V2 ZeroTier transport protocol.
+
+\section{Beginning of unfinished, outdated documentation (below)}
 
 \section{ZeroTier Rendezvous Protocol}\label{sec:rendezvous}
 
