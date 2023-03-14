@@ -88,27 +88,28 @@ The ZeroTier protocol emulates the ethernet protocol for the sake of being as lo
 \section{ZeroTier Secure Session Protocol}\label{sec:transport}
 
 ZeroTier uses a FIPS compliant implementation of Noise\_XKpsk3 as its transport protocol. To understand the following section, we will assume a basic familiarity with the Noise protocol, documented here https://noiseprotocol.org/noise.html. We will primarily be explaining the ZeroTier transport protocol in relation to the specification of the noise protocol. Noise has a very particular naming scheme for instanciations of it, and our full protocol name is
-$$\texttt{Noise\_XKpsk3\_P384\_AESGCM\_SHA384\_hybridKyber1024}.$$
+$$\texttt{Noise\_XKpsk3\_P384\_AESGCM\_SHA512\_hybridKyber1024}.$$
 We only implement the above protocol with those static choices of cryptographic primitives. \texttt{Noise\_XKpsk3} specifies we are implementing Noise XK with a preshared symmetric secret used on the third round of our handshake. \texttt{P384} specifies we are using eleptic curve P384 as our FIPS compliant Diffie-Helman (DH) primitive. \texttt{AESGCM} specifies we are using the AES block cipher in GCM mode as our symmetric primitive. \texttt{SHA384} is our FIPS compliant hash function. And finally, \texttt{hybridKyber1024} specifies we are adding hybrid encryption onto Noise using an ephemeral Kyber1024 DH handshake.
 
-There is one and only one difference between the ZeroTier Secure Session Protocol and Noise\_XKpsk3, and that is our choice of key derivation function (KDF). Noise specifies the use of HKDF, https://eprint.iacr.org/2010/264.pdf, but despite it's strength, it has not yet been approved under FIPS. This gave us two options, we could either modify HKDF to pass any output key through an addition FIPS KDF, or we could entirely replace HKDF with a FIPS KDF. We decided on the later, using NIST's currently recommended KDF in HMAC counter mode, https://csrc.nist.gov/publications/detail/sp/800-108/archive/2008-11-06. To be specific, our implementation of `$\text{MixKey}(input\_key\_material)$' is as follows:
+There is one and only one difference between the ZeroTier Secure Session Protocol and the Noise\_XKpsk3 protocol, and that is our choice of key derivation function (KDF). Noise specifies the use of HKDF, https://eprint.iacr.org/2010/264.pdf, but despite it's strength, it has not yet been approved under FIPS. This gave us two options, we could either modify HKDF to pass any output key through an addition FIPS KDF, or we could entirely replace HKDF with a FIPS KDF. We decided on the later, using NIST's currently recommended KDF in HMAC counter mode, https://csrc.nist.gov/publications/detail/sp/800-108/archive/2008-11-06. To be specific, our implementation of `MixKey(input\_key\_material)' is as follows:
 \begin{itemize}
-  \item Sets $ck = \text{HMAC}(ck,\ input\_key\_material)$.
-  \item Sets $temp\_k = \text{HMAC}(ck,\ [1]_2\ ||\ key\_label\ ||\ 0x00\ ||\ 0\ ||\ [256]_2)$.
-  \item Truncates $temp\_k$ to 256 bits (64 bytes).
-  \item Calls InitializeKey$(temp\_k)$
+  \item Sets ck $= \text{HMAC}(\text{ck},\ \text{input\_key\_material})$.
+  \item Sets temp\_k $= \text{HMAC}(\text{ck},\ [1]_2\ ||\ key\_label\ ||\ 0x00\ ||\ 0\ ||\ [256]_2)$.
+  \item Truncates temp\_k to 256 bits (64 bytes).
+  \item Calls InitializeKey(temp\_k)
 \end{itemize}
-where $key\_label$ is a byte whose value is unique for each $temp\_k$ that is produced for encryption during the Noise handshake.
+where $key\_label$ is a byte whose value changes to a unique, statical known value every time a ee, se, es or ss token is consumed during the Noise handshake.
 
-And our implementation of `$\text{Split}()$' is as follows:
+And our implementation of `Split()' is as follows:
 \begin{itemize}
-  \item Sets $temp\_k1 = \text{HMAC}(ck,\ [1]_2\ ||\ b'A'\ ||\ 0x00\ ||\ 0\ ||\ [256]_2)$.
-  \item Sets $temp\_k2 = \text{HMAC}(ck,\ [1]_2\ ||\ b'B'\ ||\ 0x00\ ||\ 0\ ||\ [256]_2)$.
-  \item Truncates $temp\_k1$ and $temp\_k2$ to 256 bits (64 bytes).
+  \item Sets temp\_k1 $= \text{HMAC}(\text{ck},\ [1]_2\ ||\ 'A'\ ||\ 0x00\ ||\ 0\ ||\ [256]_2)$.
+  \item Sets temp\_k2 $= \text{HMAC}(\text{ck},\ [1]_2\ ||\ 'B'\ ||\ 0x00\ ||\ 0\ ||\ [256]_2)$.
+  \item Truncates temp\_k1 and temp\_k2 to 256 bits (64 bytes).
   \item Creates two new CipherState objects c1 and c2.
   \item Calls c1.InitializeKey(temp\_k1) and c2.InitializeKey(temp\_k2).
   \item Returns (c1, c2).
 \end{itemize}
+where $'A'$ and $'B'$ are their respective character codes in ASCII.
 
 
 %To begin any connection through ZeroTier, the initiator node must send an unencrypted ``hello'' packet to the destination node. This hello includes the protocol version of the initiator, packet timestamp and the identity of the initiator. The destination node may decide to end the connection by simply not replying to this packet. If it does want to continue the connection and establish a secure session, it will perform Curve25519 key agreement between the initiator's identity and its own private key, generating a symmetric session key. It will then reply to the hello with a packet containing the protocol version, packet timestamp and the identity of the destination. The initiator will be able to use this to perform key agreement with its private key and generate an identical session key. These session keys are then used to end-to-end encrypt all future packets between the two nodes. The encryption is performed using AES-GMAC-SIV with a 64-bit randomized IV\@. The Salsa20-Poly1305 stream cipher may also be used, in which case the 64-bit IV is used instead to mangle the session key per-packet.
